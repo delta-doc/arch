@@ -1,0 +1,22 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Sequence.puml
+
+title Sequence diagram for clickhouse-queue service
+
+Container(queue, "RabbitMQ", "Message broker")
+
+Container_Boundary(app, "queue-service")
+  Component(processor, "Processor", "php")
+Boundary_End()
+
+Container(fs, "Filesystem", "Stores multiple messages to send later in batch")
+ContainerDb(clickhouse, "ClickHouse", "Database for storing events")
+
+Rel(queue, processor, "amqp")
+Rel(processor, fs, "write")
+Rel(fs, processor, "read")
+Rel(processor, clickhouse, "write")
+
+SHOW_LEGEND()
+
+@enduml

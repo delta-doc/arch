@@ -1,0 +1,18 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+!$ICONURL = "https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/v3.0.0/icons"
+!include $ICONURL/common.puml
+
+title System Context Diagram for Delta Doc
+
+System(service, "Delta Doc", "Application")
+SystemDb(db, "Database")
+SystemDb(cache, "Cache")
+System_Ext(bucket, "S3")
+
+BiRel(service, db, "Reads/Writes")
+BiRel(service, cache, "Reads/Writes")
+BiRel(bucket, service, "Reads/Writes")
+
+@enduml

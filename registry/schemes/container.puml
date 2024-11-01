@@ -1,0 +1,65 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+!$ICONURL = "https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/v3.0.0/icons"
+!include $ICONURL/common.puml
+!include $ICONURL/devicons/nodejs.puml
+!include $ICONURL/devicons2/nextjs.puml
+!include $ICONURL/devicons2/nestjs_original.puml
+!include $ICONURL/devicons2/ory_original.puml
+!include $ICONURL/devicons2/redis.puml
+!include $ICONURL/devicons2/postgresql.puml
+!include $ICONURL/font-awesome-6/bucket.puml
+
+title Container Diagram for Delta Doc
+
+Container_Boundary(frontend, "Frontend") {
+  Container(app, "App", "Next.js", "", $sprite="nextjs")
+  Container(admin, "Admin", "Next.js", "", $sprite="nextjs")
+  Container(identity, "Identity", "Next.js", "", $sprite="nextjs")
+  Container(landing, "Landing", "Next.js", "", $sprite="nextjs")
+}
+
+Container_Boundary(backend, "Backend") {
+  Container(private_gateway, "Private gateway", "NestJS", "", $sprite="nestjs_original")
+  Container(public_gateway, "Public gateway", "NestJS", "", $sprite="nestjs_original")
+  Container(documents, "Documents domain", "NestJS", "", $sprite="nestjs_original")
+  Container(templates, "Templates domain", "NestJS", "", $sprite="nestjs_original")
+  Container(users, "Users domain", "NestJS", "", $sprite="nestjs_original")
+
+  Container(kratos, "ORY Kratos", "", "", $sprite="ory_original")
+  Container(oathkeeper, "ORY Oathkeeper", "", "", $sprite="ory_original")
+  Container(keto, "ORY Keto", "", "", $sprite="ory_original")
+
+  ContainerDb(db, "Database", "postgresql", "", $sprite="postgresql")
+  ContainerDb(cache, "Cache", "redis", "", $sprite="redis")
+
+  Container_Ext(bucket, "S3 bucket", "S3", "", $sprite="bucket")
+}
+
+BiRel(frontend, oathkeeper, "Query/Mutations", "graphql")
+BiRel(oathkeeper, keto, "Role based access control (RBAC)", "http")
+BiRel(oathkeeper, kratos, "Identity and access management (IAM)", "http")
+BiRel(oathkeeper, private_gateway, "Private gateway access", "graphql")
+BiRel(oathkeeper, public_gateway, "Private gateway access", "graphql")
+
+BiRel(users, kratos, "Get user info", "http")
+
+BiRel(private_gateway, documents, "Document domain query/mutation", "grpc")
+BiRel(private_gateway, templates, "Document domain query/mutation", "grpc")
+BiRel(private_gateway, users, "Document domain query/mutation", "grpc")
+
+BiRel(documents, templates, "Remote functions execution", "grpc")
+BiRel(documents, users, "Remote functions execution", "grpc")
+BiRel(templates, users, "Remote functions execution", "grpc")
+
+Rel(templates, bucket, "Save uploaded documents", "http")
+BiRel(users, bucket, "Upload and get signed links to user profile pictures", "http")
+
+BiRel(templates, db, "SQL", "sql")
+BiRel(users, db, "SQL", "sql")
+BiRel(documents, db, "SQL", "sql")
+
+BiRel(users, cache, "Save/read profile pictures signed URL")
+
+@enduml

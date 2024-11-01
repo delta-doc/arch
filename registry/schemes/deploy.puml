@@ -1,0 +1,47 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+!$ICONURL = "https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/v3.0.0/icons"
+!include $ICONURL/common.puml
+!include $ICONURL/devicons/nodejs.puml
+!include $ICONURL/devicons2/nextjs.puml
+!include $ICONURL/devicons2/nestjs_line.puml
+!include $ICONURL/devicons2/kubernetes.puml
+!include $ICONURL/devicons/github_full.puml
+!include $ICONURL/devicons/docker.puml
+
+title Deploy diagram for Delta Doc
+
+Container_Boundary(github-repo, "GitHub") {
+  Container_Boundary(github-web-repo, "Web repository") {
+    Component(web_repo, "delta-doc/web", "on branch push", "master")
+    Component(web_check_action, "Check", "Action", "", $sprite="github_full")
+    Component(web_deploy_action, "Release", "Action", "", $sprite="github_full")
+  }
+
+  Component(infrastructure_repo, "delta-doc/infrastructure", "Repository", $sprite="github_full")
+
+  Container_Boundary(github-shared-repo, "Atlantis shared repository") {
+    Component(workflow_check_action, "Check", "Action", "", $sprite="github_full")
+    Component(workflow_deploy_action, "Publish", "Action", "", $sprite="github_full")
+  }
+
+}
+
+Container_Boundary(yandex-cloud, "Yandex Cloud") {
+  Component(container_registry, "Container registry", "Service", "", $sprite="docker")
+  Component(flux, "FluxCD", "Service", "", $sprite="docker")
+  Component(managed_kubernetes, "Kubernetes", "Image", "", $sprite="kubernetes")
+}
+
+BiRel(workflow_check_action, web_check_action, "Reusable workflow")
+
+Rel(web_repo, web_deploy_action, "Merge to master")
+Rel(web_deploy_action, workflow_deploy_action, "Reusable workflow")
+BiRel(web_repo, web_check_action, "Check")
+Rel(workflow_deploy_action, container_registry, "Publish")
+Rel(container_registry, flux, "New image published")
+Rel(flux, infrastructure_repo, "Push new image tags")
+Rel(flux, managed_kubernetes, "Start new pod")
+
+@enduml
